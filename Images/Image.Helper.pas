@@ -135,6 +135,85 @@ begin
   end;
 end;
 
+function GetJpegBackgroundColor(const Jpeg: TJPEGImage): TColor;
+var
+  Bitmap: TBitmap;
+  x, y: Integer;
+  TotalR, TotalG, TotalB: Integer;
+  PixelColor: TColor;
+  PixelCount: Integer;
+begin
+  // Создаем временный Bitmap из JPEG
+  Bitmap := TBitmap.Create;
+  try
+    Bitmap.Assign(Jpeg);
+
+    // Инициализируем переменные для подсчета цвета
+    TotalR := 0;
+    TotalG := 0;
+    TotalB := 0;
+    PixelCount := 0;
+
+    // Анализируем пиксели по краям изображения, чтобы определить фон
+    for y := 0 to Bitmap.Height - 1 do
+    begin
+      // Считаем пиксели первого и последнего столбца
+      for x := 0 to 1 do
+      begin
+        PixelColor := Bitmap.Canvas.Pixels[x, y];
+        Inc(TotalR, GetRValue(PixelColor));
+        Inc(TotalG, GetGValue(PixelColor));
+        Inc(TotalB, GetBValue(PixelColor));
+        Inc(PixelCount);
+      end;
+
+      for x := Bitmap.Width - 2 to Bitmap.Width - 1 do
+      begin
+        PixelColor := Bitmap.Canvas.Pixels[x, y];
+        Inc(TotalR, GetRValue(PixelColor));
+        Inc(TotalG, GetGValue(PixelColor));
+        Inc(TotalB, GetBValue(PixelColor));
+        Inc(PixelCount);
+      end;
+    end;
+
+    for x := 0 to Bitmap.Width - 1 do
+    begin
+      // Считаем пиксели первой и последней строки
+      for y := 0 to 1 do
+      begin
+        PixelColor := Bitmap.Canvas.Pixels[x, y];
+        Inc(TotalR, GetRValue(PixelColor));
+        Inc(TotalG, GetGValue(PixelColor));
+        Inc(TotalB, GetBValue(PixelColor));
+        Inc(PixelCount);
+      end;
+
+      for y := Bitmap.Height - 2 to Bitmap.Height - 1 do
+      begin
+        PixelColor := Bitmap.Canvas.Pixels[x, y];
+        Inc(TotalR, GetRValue(PixelColor));
+        Inc(TotalG, GetGValue(PixelColor));
+        Inc(TotalB, GetBValue(PixelColor));
+        Inc(PixelCount);
+      end;
+    end;
+
+    // Определяем среднее значение для RGB компонентов
+    if PixelCount > 0 then
+    begin
+      Result := RGB(TotalR div PixelCount, TotalG div PixelCount, TotalB div PixelCount);
+    end
+    else
+    begin
+      Result := clNone; // Если пикселей не найдено, возвращаем неопределенное значение
+    end;
+
+  finally
+    Bitmap.Free;
+  end;
+end;
+
 function ConvertBitmapToPng(Bitmap: TBitmap): TPngImage;
 var
   PNG: TPngImage;
